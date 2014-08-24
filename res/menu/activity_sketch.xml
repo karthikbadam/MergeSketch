@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/SaveImage"
+        android:icon="@+drawable/save"
+        android:showAsAction="ifRoom"
+        android:title="Save Image">
+    </item>
+    
+    <item
+        android:icon="@+drawable/color_swatch"
+        android:showAsAction="ifRoom"
+        android:id="@+id/Color"
+        android:checkable="false"
+        android:enabled="true"
+        android:title="Color"
+        android:visible="true">
+    </item>
+    
+    <item
+        android:id="@+id/undo"
+        android:icon="@+drawable/undo"
+        android:showAsAction="ifRoom"
+        android:checkable="false"
+        android:enabled="true"
+        android:title="Undo"
+        android:visible="true">
+    </item>
+    
+    <item
+        android:id="@+id/Redo"
+         android:icon="@+drawable/redo"
+        android:checkable="false"
+        android:enabled="true"
+        android:showAsAction="ifRoom"
+        android:title="Redo"
+        android:visible="true">
+    </item>
+    
+    <item
+        android:id="@+id/clear"
+        android:icon="@+drawable/edit_clear"
+        android:showAsAction="ifRoom"
+        android:title="clear Image">
+    </item>
+    
+   
+    <item
+        android:id="@+id/history"
+        android:icon="@+drawable/history"
+        android:showAsAction="ifRoom"
+        android:checkable="false"
+        android:enabled="true"
+        android:title="History"
+        android:visible="true">
+    </item>
+    
+
+</menu>

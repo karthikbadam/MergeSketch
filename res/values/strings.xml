@@ -1,0 +1,27 @@
+<resources>
+
+    <string name="app_name">SketchViced</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_sketch">Sketch</string>
+    <string name="size">Size(px) :</string>
+    <string name="opacity">Opacity :</string>
+    <string name="set">Set</string>
+	<string name="hsize">History Size:</string>
+	<string name="tab1">Browser</string>
+	<string name="tab2">checkout</string>
+	<string name="tab3">Commit</string>
+	<string name="tab4">Branch</string>
+	<string name="eraser">Eraser</string>
+	<string name="join">Commit to Current Session</string>
+	<string name="commit">Commit</string>
+	<string name="branch">Branch from Current Session</string>
+	<string name="branch_button">Branch</string>
+	<string name="checkout">Get from Current Session</string>
+	<string name="checkout_button">Check Out</string>
+	<string name="color">Color:</string>
+	<string name="tab0">new</string>
+	<string name="empty">Empty</string>
+	<string name="refresh">Refresh</string>
+    
+</resources>

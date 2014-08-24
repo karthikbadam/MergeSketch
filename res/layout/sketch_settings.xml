@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/sketchsettings"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <RelativeLayout
+        android:id="@+id/sizelayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" 
+        android:layout_marginLeft="20dp">
+
+        <TextView
+            android:id="@+id/size_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+        	android:layout_alignParentTop="true"
+            android:text="@string/size"
+            android:textSize="20sp" />
+
+        
+        <TextView
+            android:id="@+id/size_seekval"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="33dp"
+            android:layout_toRightOf="@+id/size_text_view"
+            android:textSize="20sp" />
+
+        <SeekBar
+            android:id="@+id/size_seekbar"
+            android:layout_width="224dp"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="110dp"
+            android:layout_toRightOf="@+id/size_text_view"
+            android:max="25" />
+        
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/opacitylayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/sizelayout"
+        android:layout_marginTop="20dp" 
+        android:layout_marginLeft="20dp">
+
+        <TextView
+            android:id="@+id/opacity_text_view"
+            android:layout_width="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_height="wrap_content"
+            android:text="@string/opacity"
+            android:textSize="20sp" />
+
+
+        <TextView
+            android:id="@+id/opacity_seekvalue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="42dp"
+            android:layout_toRightOf="@+id/opacity_text_view"
+            android:textSize="20sp" />
+
+        <SeekBar
+            android:id="@+id/opacity_seekbar"
+            android:layout_width="224dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="112dp"
+            android:layout_toRightOf="@+id/opacity_text_view"
+            android:max="255" />
+        	
+    </RelativeLayout>
+
+    <CheckBox
+        android:id="@+id/eraser_checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/opacitylayout"
+        android:layout_marginTop="20dp"
+        android:text="@string/eraser"
+        android:textSize="20sp" 
+        android:layout_marginLeft="20dp"/>
+    
+    <TextView
+        android:id="@+id/textview_color"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/eraser_checkbox"
+        android:layout_marginTop="20dp"
+        android:text="@string/color"
+        android:textSize="20sp" 
+        android:layout_marginLeft="20dp"/>
+    
+    <RelativeLayout
+        android:id="@+id/colorlayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="50dp"
+        android:layout_below="@+id/textview_color" >
+
+    </RelativeLayout>
+
+    
+
+</RelativeLayout>
