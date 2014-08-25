@@ -199,6 +199,7 @@ public class SketchActivity extends Activity {
 //				branchInSession();
 //			}
 //		});
+		
 		color.setOnClickListener(new View.OnClickListener() {
 
 			@Override
@@ -357,7 +358,7 @@ public class SketchActivity extends Activity {
 	protected void checkoutFromSession() {
 		
 		new AlertDialog.Builder(this).setTitle("Confirm")
-		.setMessage("The sketch - " + sessionDir+mFileName+" will be downloaded. Continue?”")
+		.setMessage("The sketch - " + sessionDir+mFileName+" will be downloaded. Continue?ï¿½")
 		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
