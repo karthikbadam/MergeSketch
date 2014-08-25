@@ -18,7 +18,7 @@
         <activity
             android:name="com.pivot.sketch.SketchActivity"
             android:label="@string/title_activity_sketch"
-            android:theme="@android:style/Theme.Holo.NoActionBar"
+            android:theme="@android:style/Theme.Holo"
             android:uiOptions="splitActionBarWhenNarrow" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

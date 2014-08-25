@@ -59,10 +59,9 @@ import edu.pivot.history.HistoryBrowser;
 
 public class SketchActivity extends Activity {
 
-	// private static final String TAG = "SketchActivity";
 	Context mContext;
 		
-	// main UI
+	// main UI -- all buttons 
 	private SketchView view;
 	private RelativeLayout tabs;
 	ImageButton startNewSession;
@@ -77,16 +76,21 @@ public class SketchActivity extends Activity {
 	ImageButton history;
 	ImageButton save;
 	
+	//current file
 	File mFile = null;
 	
+	//VICED current branch
 	int mBranchNumber = 0;
 	boolean isBranch = false;
 
+	//Dropbox folder to store the sketches
 	public String sessionName = "/VICED/one";
 
+	//App key and secret from Dropbox
 	final static private String APP_KEY = "ewvxxygoe6o8qax";
 	final static private String APP_SECRET = "urs4c0ylkf9ccew";
 
+	//Accessing entire Dropbox
 	final static private AccessType ACCESS_TYPE = AccessType.DROPBOX;
 
 	// You don't need to change these, leave them alone.
@@ -94,10 +98,11 @@ public class SketchActivity extends Activity {
 	final static private String ACCESS_KEY_NAME = "ACCESS_KEY";
 	final static private String ACCESS_SECRET_NAME = "ACCESS_SECRET";
 
+	//DropboxAPI
 	DropboxAPI<AndroidAuthSession> mApi;
 
+	
 	private boolean mLoggedIn = false;
-
 	private String sessionDir = "";
 	private String mFileName;
 	
@@ -107,20 +112,23 @@ public class SketchActivity extends Activity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		//Android Application context
 		mContext = this;
+		
+		//Time
 		Date date = new Date();
         DateFormat df = new SimpleDateFormat("dd-kk-mm-ss");
         String newFile = df.format(date);
         mFileName = "branch_"+newFile+".xml";
 		
+        
         if (savedInstanceState != null) {
 			sessionName = savedInstanceState.getString("sessionName");
 		}
 
 		sessionDir = sessionName + "/";
 		
-		
-		//
 		/* Connect to dropbox */
 		AndroidAuthSession session = buildSession();
 		mApi = new DropboxAPI<AndroidAuthSession>(session);
@@ -131,10 +139,14 @@ public class SketchActivity extends Activity {
 		// Creating the UI
 		LayoutInflater layout = (LayoutInflater) this
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+		// Read the content of main_ui xml file
 		ViewGroup v = (ViewGroup) layout.inflate(R.layout.main_ui, null);
 
+		
 		tabs = (RelativeLayout) v.findViewById(R.id.tab_layout);
 
+		// Get the size of the sketch layout
 		RelativeLayout sketching = (RelativeLayout) v
 				.findViewById(R.id.sketch_view);
 		Display display = getWindowManager().getDefaultDisplay();
@@ -143,9 +155,11 @@ public class SketchActivity extends Activity {
 		int width = size.x;
 		int height = size.y;
 
+		//SketchView is the part of the UI 
 		view = new SketchView(this, width, height);
 		sketching.addView(view);
 
+		//All the buttons in the UI
 		startNewSession = (ImageButton) v.findViewById(R.id.button0);
 		browser = (ImageButton) v.findViewById(R.id.button1);
 		checkout = (ImageButton) v.findViewById(R.id.button2);
@@ -325,7 +339,9 @@ public class SketchActivity extends Activity {
 		}
 		return super.onKeyDown(keyCode, event);
 	}
-
+	
+	
+	//Every sketching session has a name
 	protected void startSession() {
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
 		alert.setTitle("Enter session name");
@@ -354,7 +370,7 @@ public class SketchActivity extends Activity {
 	}
 
 	
-
+	//Download a sketch from Dropbox
 	protected void checkoutFromSession() {
 		
 		new AlertDialog.Builder(this).setTitle("Confirm")
@@ -389,6 +405,7 @@ public class SketchActivity extends Activity {
 	}
 
 	
+	//Save to Dropbox
 	protected void commitToSession() {
 		
 		//handling first upload
@@ -473,13 +490,15 @@ public class SketchActivity extends Activity {
 		}).show();
 		
 	}
-
+	
+	//Allows branching by setting a boolean variable before commit
 	protected void branchInSession() {
 		isBranch = true;
 		commitToSession();
 		isBranch = false;
 	}
 	
+	//Simple file browser UI
 	protected void browseSession(String session_name) { 
 		Intent intent = new Intent(this, FileBrowser.class);
 		final int result = 1;
@@ -487,6 +506,7 @@ public class SketchActivity extends Activity {
 
 	}
 
+	//Save as an image 
 	private void saveBitmap() {
 
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
