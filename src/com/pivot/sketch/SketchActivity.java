@@ -62,7 +62,9 @@ public class SketchActivity extends Activity {
 	Context mContext;
 		
 	// main UI -- all buttons 
-	private SketchView view;
+	//private SketchView view;
+	private MergeView view;
+	
 	private RelativeLayout tabs;
 	ImageButton startNewSession;
 	ImageButton browser;
@@ -149,6 +151,7 @@ public class SketchActivity extends Activity {
 		// Get the size of the sketch layout
 		RelativeLayout sketching = (RelativeLayout) v
 				.findViewById(R.id.sketch_view);
+		
 		Display display = getWindowManager().getDefaultDisplay();
 		Point size = new Point();
 		display.getSize(size);
@@ -156,9 +159,38 @@ public class SketchActivity extends Activity {
 		int height = size.y;
 
 		//SketchView is the part of the UI 
-		view = new SketchView(this, width, height);
-		sketching.addView(view);
-
+		//view = new SketchView(this, width, height);
+		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+		params.leftMargin = 20;
+		params.topMargin = 20; 
+		params.width = 2*width/5; 
+		params.height = 3*height/5;
+				
+		view = new MergeView(this, 2*width/5, 3*height/4);
+		sketching.addView(view, params);
+		
+		RelativeLayout.LayoutParams params2 = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+		params2.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+		params2.leftMargin = 3*width/5 - 50;
+		params2.topMargin = 20; 
+		params2.width = 2*width/5; 
+		params2.height = 3*height/5;
+				
+		MergeView view2 = new MergeView(this, 2*width/5, 3*height/4);
+		sketching.addView(view2, params2);
+		
+		RelativeLayout.LayoutParams params3 = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+		params3.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+		params3.leftMargin = width/2 - width/8 - 20;
+		params3.topMargin = 3*height/4; 
+		params3.width = width/4; 
+		params3.height = height/4;
+				
+		MergeView view3 = new MergeView(this, width/4, height/4);
+		sketching.addView(view3, params3);
+		
+		
 		//All the buttons in the UI
 		startNewSession = (ImageButton) v.findViewById(R.id.button0);
 		browser = (ImageButton) v.findViewById(R.id.button1);
