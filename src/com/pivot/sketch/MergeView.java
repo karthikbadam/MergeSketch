@@ -1,13 +1,36 @@
 package com.pivot.sketch;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.os.Environment;
+import android.text.Editable;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.EditText;
 
 // UI of the Sketching View
 public class MergeView extends View implements
@@ -31,7 +54,12 @@ public class MergeView extends View implements
 	private float startX, startY;
 	private Path mPath;
 	private static final float TOUCH_TOLERANCE = 3;
+	int width = 0; 
+	int height = 0; 
 	
+	Paint mPaint;
+	
+	@SuppressLint("NewApi")
 	public MergeView(Context c, int width, int height) {
 		super(c);
 		mLayer = new Layer();
@@ -41,10 +69,110 @@ public class MergeView extends View implements
 		 * int height = display.getHeight(); //deprecated
 		 */
 
+		this.width = width; 
+		this.height = height; 
+		
 		mBitmap = Bitmap.createBitmap(width, height,
 				Bitmap.Config.ARGB_8888);
 		mCanvas = new Canvas(mBitmap);
+		
+		mPaint = new Paint();
+		mPaint.setStrokeWidth(1);
+		mPaint.setStyle(Paint.Style.STROKE);
+		mPaint.setColor(Color.GRAY);
+		mPaint.setPathEffect(new DashPathEffect(new float[] {5,10}, 0));
+		mPaint.setAntiAlias(true);
+		mPaint.setDither(true);	
+	}
+	
+	
+	//Save as an image 
+	public void openBitmap(String filename) {
 
+		File mediaStorageDir = new File(Environment
+				.getExternalStorageDirectory(), "VICED");
+		mediaStorageDir.mkdirs();
+
+		File dataFile = new File(mediaStorageDir.getPath(), filename);
+		
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		mLayer = new Layer();
+		DocumentBuilder db;
+		try {
+			db = dbf.newDocumentBuilder();
+			Document doc = db.parse(new FileInputStream(dataFile));
+			doc.getDocumentElement().normalize();
+			
+			NodeList layer_nodes = doc.getElementsByTagName("layer");
+			
+			for (int i = 0; i < layer_nodes.getLength(); i++) {
+				Element layer_node = (Element) layer_nodes.item(i);
+				NodeList stroke_nodes = layer_node.getElementsByTagName("stroke");
+				for (int j = 0; j < stroke_nodes.getLength(); j++) {
+					Node stroke_node =  stroke_nodes.item(j);
+					Element stroke_element = (Element)stroke_node;
+					
+					//Getting Width
+					NodeList width_nodes = stroke_element.getElementsByTagName("width");
+					Element width_element = (Element) width_nodes.item(0);
+					
+					NodeList width_values = width_element.getChildNodes();
+					Float width =  Float.valueOf(width_values.item(0).getNodeValue());
+					
+					//Getting type
+					
+					NodeList type_nodes = stroke_element.getElementsByTagName("type");
+					Element type_node = (Element) type_nodes.item(0);
+					NodeList type_values = type_node.getChildNodes();
+					String type = "";
+					type = type_values.item(0).getNodeValue();
+					
+					
+					//Getting color
+					NodeList color_nodes = stroke_element.getElementsByTagName("color");
+					Element color_node = (Element) color_nodes.item(0);
+					NodeList color_values = color_node.getChildNodes();
+					int color = Integer.valueOf(color_values.item(0).getNodeValue());
+					
+					Stroke stroke = new Stroke();
+					
+					stroke.setColor(color);
+					if (type.equals("STROKE"))
+						stroke.setStrokeType(Paint.Style.STROKE);
+					stroke.setStrokeWidth(width);
+					
+					//Getting trace
+					NodeList trace_nodes = stroke_element.getElementsByTagName("trace");
+					Element trace_node = (Element) trace_nodes.item(0);
+					NodeList trace_values = trace_node.getChildNodes();
+					String trace = trace_values.item(0).getNodeValue();
+					String[] touch_points = trace.split(",");
+					boolean is_end = false;
+					for (int k = 0; k < touch_points.length; k++) {
+						String[] touch_coordinates = touch_points[k].split(" ");
+						Float x = (float) (0.5*Float.valueOf(touch_coordinates[0]));
+						Float y = (float) (0.5*Float.valueOf(touch_coordinates[1]));
+						
+						stroke.addTouchPoint(x, y, is_end);
+						
+					}		
+					stroke.buildStroke();
+					mLayer.addStroke(stroke);
+				}
+				
+			}
+			numberOfStrokes = mLayer.numberOfStrokes();
+			invalidate();
+			
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (SAXException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public void setLayer(Layer layer){
@@ -76,6 +204,8 @@ public class MergeView extends View implements
 	@Override
 	protected void onDraw(Canvas canvas) {
 		canvas.drawColor(Color.WHITE);
+		
+		canvas.drawRect(1, 1, this.width-1, this.height-1, mPaint);;
 		for (int i = 0; i < numberOfStrokes; i++) {
 			if (i < mLayer.numberOfStrokes()) {
 				Stroke currentStroke = mLayer.getStroke(i);

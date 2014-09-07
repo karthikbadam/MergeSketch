@@ -9,9 +9,10 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:visibility="visible" >
+        android:visibility="visible"
+        android:background="#FFFFFF" >
 
-        <ImageButton
+        <!-- <ImageButton
             android:id="@+id/button0"
             android:layout_width="42dp"
             android:layout_height="38dp"
@@ -52,16 +53,16 @@
             android:background="@drawable/commit"
             android:layout_marginTop="5dp"
             android:contentDescription="@string/tab3" />
-
+ -->
         
          <ImageButton
             android:id="@+id/button4"
             android:layout_width="40dp"
             android:layout_height="42dp"
             android:layout_alignParentLeft="true"
-            android:layout_below="@+id/button3"
             android:background="@drawable/color_swatch"
             android:layout_marginTop="10dp"
+            android:layout_marginLeft="10dp"
             android:contentDescription="@string/tab3" />
          
          
@@ -73,6 +74,7 @@
             android:layout_below="@+id/button4"
             android:background="@drawable/undo"
             android:layout_marginTop="5dp"
+            android:layout_marginLeft="10dp"
             android:contentDescription="@string/tab3" />
           
           <ImageButton
@@ -83,6 +85,7 @@
             android:layout_below="@+id/button5"
             android:background="@drawable/redo"
             android:layout_marginTop="5dp"
+            android:layout_marginLeft="10dp"
             android:contentDescription="@string/tab3" />
         
           
@@ -94,6 +97,7 @@
             android:layout_below="@+id/button6"
             android:background="@drawable/edit_clear"
             android:layout_marginTop="5dp"
+            android:layout_marginLeft="10dp"
             android:contentDescription="@string/tab3" />
            
             <ImageButton
@@ -104,6 +108,7 @@
             android:layout_below="@+id/button7"
             android:background="@drawable/history"
             android:layout_marginTop="5dp"
+            android:layout_marginLeft="10dp"
             android:contentDescription="@string/tab3" />
         
             
@@ -115,6 +120,7 @@
             android:layout_below="@+id/button8"
             android:background="@drawable/save"
             android:layout_marginTop="5dp"
+            android:layout_marginLeft="10dp"
             android:contentDescription="@string/tab3" />
             
             
@@ -135,7 +141,8 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_toRightOf="@+id/tab_layout"
-        android:orientation="vertical" >
+        android:orientation="vertical" 
+        android:background="#FFFFFF" >
 
     </RelativeLayout>
 

@@ -86,27 +86,23 @@ public class SketchActivity extends Activity {
 	boolean isBranch = false;
 
 	//Dropbox folder to store the sketches
-	public String sessionName = "/VICED/one";
+	//public String sessionName = "/VICED/one";
 
 	//App key and secret from Dropbox
-	final static private String APP_KEY = "ewvxxygoe6o8qax";
-	final static private String APP_SECRET = "urs4c0ylkf9ccew";
+	//final static private String APP_KEY = "ewvxxygoe6o8qax";
+	//final static private String APP_SECRET = "urs4c0ylkf9ccew";
 
 	//Accessing entire Dropbox
-	final static private AccessType ACCESS_TYPE = AccessType.DROPBOX;
+	//final static private AccessType ACCESS_TYPE = AccessType.DROPBOX;
 
 	// You don't need to change these, leave them alone.
-	final static private String ACCOUNT_PREFS_NAME = "prefs";
-	final static private String ACCESS_KEY_NAME = "ACCESS_KEY";
-	final static private String ACCESS_SECRET_NAME = "ACCESS_SECRET";
+	//final static private String ACCOUNT_PREFS_NAME = "prefs";
+	//final static private String ACCESS_KEY_NAME = "ACCESS_KEY";
+	//final static private String ACCESS_SECRET_NAME = "ACCESS_SECRET";
 
 	//DropboxAPI
-	DropboxAPI<AndroidAuthSession> mApi;
+	//DropboxAPI<AndroidAuthSession> mApi;
 
-	
-	private boolean mLoggedIn = false;
-	private String sessionDir = "";
-	private String mFileName;
 	
 	boolean firstTime = true;
 	
@@ -122,22 +118,8 @@ public class SketchActivity extends Activity {
 		Date date = new Date();
         DateFormat df = new SimpleDateFormat("dd-kk-mm-ss");
         String newFile = df.format(date);
-        mFileName = "branch_"+newFile+".xml";
-		
+       
         
-        if (savedInstanceState != null) {
-			sessionName = savedInstanceState.getString("sessionName");
-		}
-
-		sessionDir = sessionName + "/";
-		
-		/* Connect to dropbox */
-		AndroidAuthSession session = buildSession();
-		mApi = new DropboxAPI<AndroidAuthSession>(session);
-		checkAppKeySetup();
-		mApi.getSession().startAuthentication(SketchActivity.this);
-		mLoggedIn = true;
-
 		// Creating the UI
 		LayoutInflater layout = (LayoutInflater) this
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -165,20 +147,23 @@ public class SketchActivity extends Activity {
 		params.leftMargin = 20;
 		params.topMargin = 20; 
 		params.width = 2*width/5; 
-		params.height = 3*height/5;
+		params.height = 3*height/4;
 				
 		view = new MergeView(this, 2*width/5, 3*height/4);
 		sketching.addView(view, params);
+		view.openBitmap("sketch1.xml");
 		
 		RelativeLayout.LayoutParams params2 = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 		params2.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
-		params2.leftMargin = 3*width/5 - 50;
+		params2.leftMargin = 3*width/5 - 60;
 		params2.topMargin = 20; 
 		params2.width = 2*width/5; 
-		params2.height = 3*height/5;
+		params2.height = 3*height/4;
 				
 		MergeView view2 = new MergeView(this, 2*width/5, 3*height/4);
 		sketching.addView(view2, params2);
+		view2.openBitmap("sketch2.xml");
+		
 		
 		RelativeLayout.LayoutParams params3 = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 		params3.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
@@ -190,61 +175,14 @@ public class SketchActivity extends Activity {
 		MergeView view3 = new MergeView(this, width/4, height/4);
 		sketching.addView(view3, params3);
 		
-		
-		//All the buttons in the UI
-		startNewSession = (ImageButton) v.findViewById(R.id.button0);
-		browser = (ImageButton) v.findViewById(R.id.button1);
-		checkout = (ImageButton) v.findViewById(R.id.button2);
-		commit = (ImageButton) v.findViewById(R.id.button3);
+			
 		color = (ImageButton) v.findViewById(R.id.button4);
 		undo = (ImageButton) v.findViewById(R.id.button5);
 		redo = (ImageButton) v.findViewById(R.id.button6);
 		clear = (ImageButton) v.findViewById(R.id.button7);
 		history = (ImageButton) v.findViewById(R.id.button8);
 		save = (ImageButton) v.findViewById(R.id.button9);
-		
-		//branch = (ImageButton) v.findViewById(R.id.button4);
 
-		startNewSession.setOnClickListener(new View.OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				startSession();
-			}
-		});
-
-		browser.setOnClickListener(new View.OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				browseSession(sessionName);
-
-			}
-		});
-
-		checkout.setOnClickListener(new View.OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				checkoutFromSession();
-			}
-		});
-
-		commit.setOnClickListener(new View.OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				commitToSession();
-			}
-		});
-
-//		branch.setOnClickListener(new View.OnClickListener() {
-//
-//			@Override
-//			public void onClick(View v) {
-//				branchInSession();
-//			}
-//		});
 		
 		color.setOnClickListener(new View.OnClickListener() {
 
@@ -253,6 +191,7 @@ public class SketchActivity extends Activity {
 				view.changeColor();
 			}
 		});
+		
 		undo.setOnClickListener(new View.OnClickListener() {
 
 			@Override
@@ -260,6 +199,7 @@ public class SketchActivity extends Activity {
 				view.undo();
 			}
 		});
+		
 		redo.setOnClickListener(new View.OnClickListener() {
 
 			@Override
@@ -267,17 +207,16 @@ public class SketchActivity extends Activity {
 				view.redo();
 			}
 		});
+		
 		clear.setOnClickListener(new View.OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
 				view.clear();
-				Date date = new Date();
-		        DateFormat df = new SimpleDateFormat("dd-kk-mm-ss");
-		        String newFile = df.format(date);
-		        mFileName = "branch_"+newFile+".xml";
+				
 			}
 		});
+		
 		history.setOnClickListener(new View.OnClickListener() {
 
 			@Override
@@ -290,6 +229,7 @@ public class SketchActivity extends Activity {
 				startActivityForResult(intent, result);
 			}
 		});
+		
 		save.setOnClickListener(new View.OnClickListener() {
 
 			@Override
@@ -310,26 +250,26 @@ public class SketchActivity extends Activity {
 		super.onResume();
 		mContext = this;
 		isBranch = false;
-		AndroidAuthSession session = mApi.getSession();
+		//AndroidAuthSession session = mApi.getSession();
 
 		// The next part must be inserted in the onResume() method of the
 		// activity from which session.startAuthentication() was called, so
 		// that Dropbox authentication completes properly.
-		if (session.authenticationSuccessful()) {
-			try {
-				// Mandatory call to complete the auth
-				session.finishAuthentication();
-				// Store it locally in our app for later use
-				TokenPair tokens = session.getAccessTokenPair();
-				storeKeys(tokens.key, tokens.secret);
-				mLoggedIn = true;
-				showToast("Session Authorized");
-			} catch (IllegalStateException e) {
-				showToast("Couldn't authenticate with Dropbox:"
-						+ e.getLocalizedMessage());
-				System.out.println("Error authenticating");
-			}
-		}
+//		if (session.authenticationSuccessful()) {
+//			try {
+//				// Mandatory call to complete the auth
+//				session.finishAuthentication();
+//				// Store it locally in our app for later use
+//				TokenPair tokens = session.getAccessTokenPair();
+//				storeKeys(tokens.key, tokens.secret);
+//				mLoggedIn = true;
+//				showToast("Session Authorized");
+//			} catch (IllegalStateException e) {
+//				showToast("Couldn't authenticate with Dropbox:"
+//						+ e.getLocalizedMessage());
+//				System.out.println("Error authenticating");
+//			}
+//		}
 
 	}
 
@@ -360,7 +300,7 @@ public class SketchActivity extends Activity {
 								public void onClick(DialogInterface dialog,
 										int which) {
 									// Exit the activity
-									logOut();
+									//logOut();
 									android.os.Process
 											.killProcess(android.os.Process
 													.myPid());
@@ -373,171 +313,6 @@ public class SketchActivity extends Activity {
 	}
 	
 	
-	//Every sketching session has a name
-	protected void startSession() {
-		AlertDialog.Builder alert = new AlertDialog.Builder(this);
-		alert.setTitle("Enter session name");
-
-		// Set an EditText view to get user input
-		final EditText input = new EditText(this);
-		alert.setView(input);
-
-		alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int whichButton) {
-				Editable value = input.getText();
-				sessionName = "/VICED/" + value.toString();
-				sessionDir = "/VICED/" + value.toString() + "/";
-			}
-		});
-		alert.show();
-		isBranch = false;
-		Date date = new Date();
-        DateFormat df = new SimpleDateFormat("dd-kk-mm-ss");
-        String newFile = df.format(date);
-        mFileName = "branch_"+newFile+".xml";
-        firstTime = true;
-        
-        view.clear();
-	}
-
-	
-	//Download a sketch from Dropbox
-	protected void checkoutFromSession() {
-		
-		new AlertDialog.Builder(this).setTitle("Confirm")
-		.setMessage("The sketch - " + sessionDir+mFileName+" will be downloaded. Continue?�")
-		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				ReadFromDropbox readData = new ReadFromDropbox(mContext, mApi, sessionDir,
-						null, mFileName);
-				readData.setFileDownloadListener(new FileDownloadListener() {
-					@SuppressWarnings("unchecked")
-					@Override
-					public void fileDownloadedSuccessfully(Layer layer) {
-						view.setLayer(layer);
-					}
-
-					public void indexFileReadSucessful(int number_of_branches) {
-						// not needed right now
-					}
-
-					@Override
-					public void fileDownloadFailed() {
-						// handler failure (e.g network not available etc.)
-					}
-
-				});
-				readData.execute();
-				isBranch = false;
-			}
-		}).show();
-		firstTime = false;
-	}
-
-	
-	//Save to Dropbox
-	protected void commitToSession() {
-		
-		//handling first upload
-		if (firstTime == true) {
-			Date date = new Date();
-            DateFormat df = new SimpleDateFormat("dd-kk-mm-ss");
-            String newFile = df.format(date);
-            mFileName = "branch_"+newFile+".xml";
-            firstTime = false;
-            System.out.println("new sketch ");
-		}
-		
-		CheckBox checkbox1 = new CheckBox(this);
-		checkbox1.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-		    @Override
-		    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-		    	isBranch = true;
-		    	Date date = new Date();
-	            DateFormat df = new SimpleDateFormat("dd-kk-mm-ss");
-	            String newFile = df.format(date);
-	            mFileName = "branch_"+newFile+".xml";
-		    }
-		});
-		checkbox1.setText("Upload as a branch");
-		CheckBox checkbox2 = new CheckBox(this);
-		checkbox2.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-		    @Override
-		    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-		    	isBranch = false;
-		    	mFileName = "main.xml";
-		    }
-		});
-		checkbox2.setText("Upload as the final submission");
-		
-		if (isBranch) {
-			Date date = new Date();
-            DateFormat df = new SimpleDateFormat("dd-kk-mm-ss");
-            String newFile = df.format(date);
-            mFileName = "branch_"+newFile+".xml";
-		} 
-		
-		
-		LinearLayout v = new LinearLayout(this);
-		v.addView(checkbox1);
-		v.addView(checkbox2);
-		v.setOrientation(1);
-		new AlertDialog.Builder(this).setTitle("Confirm")
-		.setView(v)
-		.setMessage("Your sketch will be uploaded to "+ sessionDir+". Continue?")
-		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				FileOutputStream outStream = null;
-				File mediaStorageDir = new File(Environment
-						.getExternalStorageDirectory(), "MySketches");
-				mediaStorageDir.mkdirs();
-
-				mFile = new File(mediaStorageDir.getPath(), mFileName.replace(".xml", "")+ ".PNG");
-				view.draw(view.mCanvas);
-				try {
-					outStream = new FileOutputStream(mFile);
-					view.mBitmap.compress(Bitmap.CompressFormat.PNG, 100,
-							outStream);
-					outStream.flush();
-					outStream.close();
-
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				
-				// Figure out this logic
-				WriteToDropbox writer = new WriteToDropbox(mContext, mApi, sessionDir,
-						view.mLayer, mFileName, null);
-				WriteToDropbox image_writer = new WriteToDropbox(mContext, mApi, sessionDir,
-						view.mLayer, mFileName, mFile);
-				writer.execute();
-				image_writer.execute();
-				isBranch = false;
-			}
-		}).show();
-		
-	}
-	
-	//Allows branching by setting a boolean variable before commit
-	protected void branchInSession() {
-		isBranch = true;
-		commitToSession();
-		isBranch = false;
-	}
-	
-	//Simple file browser UI
-	protected void browseSession(String session_name) { 
-		Intent intent = new Intent(this, FileBrowser.class);
-		final int result = 1;
-		startActivityForResult(intent, result);
-
-	}
-
 	//Save as an image 
 	private void saveBitmap() {
 
@@ -633,77 +408,53 @@ public class SketchActivity extends Activity {
 		return false;
 	}
 
-	@Override
-	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-
-		super.onActivityResult(requestCode, resultCode, data);
-		String extraData = data.getStringExtra("ComingFrom");
-		System.out.println(extraData);
-
-		if (extraData.equals("File Browser")) {
-			Layer layer = data.getParcelableExtra("layer");
-			System.out.println("layer " + layer.getStrokes().size());
-			view.setLayer(layer);
-
-			String dir = data.getStringExtra("dir");
-			sessionDir = dir;
-
-			if (dir.charAt(dir.length() - 1) == '/') {
-				sessionName = dir.replace(dir.substring(dir.length() - 1), "");
-			}
-			System.out.println("Selected Dir " + dir);
-			isBranch = data.getBooleanExtra("branch", true);
-			mFileName = data.getStringExtra("filename");
-			firstTime = false;
-			/*
-			int number_of_branches = data.getIntExtra("branchNumber", 0);
-			if (isBranch == true) {
-				mBranchNumber = number_of_branches + 1;
-				mFileName = "branch" + mBranchNumber + ".xml";
-			} else {
-				mFileName = "main.xml";	
-				
-			}
-			*/
-			
-			}
-	}
+//	@Override
+//	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+//
+//		super.onActivityResult(requestCode, resultCode, data);
+//		String extraData = data.getStringExtra("ComingFrom");
+//		System.out.println(extraData);
+//
+//		if (extraData.equals("File Browser")) {
+//			Layer layer = data.getParcelableExtra("layer");
+//			System.out.println("layer " + layer.getStrokes().size());
+//			view.setLayer(layer);
+//
+//			String dir = data.getStringExtra("dir");
+//			sessionDir = dir;
+//
+//			if (dir.charAt(dir.length() - 1) == '/') {
+//				sessionName = dir.replace(dir.substring(dir.length() - 1), "");
+//			}
+//			System.out.println("Selected Dir " + dir);
+//			isBranch = data.getBooleanExtra("branch", true);
+//			mFileName = data.getStringExtra("filename");
+//			firstTime = false;
+//			/*
+//			int number_of_branches = data.getIntExtra("branchNumber", 0);
+//			if (isBranch == true) {
+//				mBranchNumber = number_of_branches + 1;
+//				mFileName = "branch" + mBranchNumber + ".xml";
+//			} else {
+//				mFileName = "main.xml";	
+//				
+//			}
+//			*/
+//			
+//			}
+//	}
 
 	// From here are the required dropbox functions
 
-	private void logOut() {
-		// Remove credentials from the session
-		mApi.getSession().unlink();
-
-		// Clear our stored keys
-		clearKeys();
-		// Change UI state to display logged out version
-		mLoggedIn = false;
-	}
-
-	/* Prepares appkey before starting the connection */
-	private void checkAppKeySetup() {
-		// Check to make sure that we have a valid app key
-		if (APP_KEY.startsWith("CHANGE") || APP_SECRET.startsWith("CHANGE")) {
-			showToast("You must apply for an app key and secret from developers.dropbox.com, and add them to the DBRoulette ap before trying it.");
-			finish();
-			return;
-		}
-
-		// Check if the app has set up its manifest properly.
-		Intent testIntent = new Intent(Intent.ACTION_VIEW);
-		String scheme = "db-" + APP_KEY;
-		String uri = scheme + "://" + AuthActivity.AUTH_VERSION + "/test";
-		testIntent.setData(Uri.parse(uri));
-		PackageManager pm = getPackageManager();
-		if (0 == pm.queryIntentActivities(testIntent, 0).size()) {
-			showToast("URL scheme in your app's "
-					+ "manifest is not set up correctly. You should have a "
-					+ "com.dropbox.client2.android.AuthActivity with the "
-					+ "scheme: " + scheme);
-			finish();
-		}
-	}
+//	private void logOut() {
+//		// Remove credentials from the session
+//		mApi.getSession().unlink();
+//
+//		// Clear our stored keys
+//		clearKeys();
+//		// Change UI state to display logged out version
+//		mLoggedIn = false;
+//	}
 
 	/* toast */
 	private void showToast(String msg) {
@@ -711,63 +462,5 @@ public class SketchActivity extends Activity {
 		error.show();
 	}
 
-	/**
-	 * Shows keeping the access keys returned from Trusted Authenticator in a
-	 * local store, rather than storing user name & password, and
-	 * re-authenticating each time (which is not to be done, ever).
-	 * 
-	 * @return Array of [access_key, access_secret], or null if none stored
-	 */
-	private String[] getKeys() {
-		SharedPreferences prefs = getSharedPreferences(ACCOUNT_PREFS_NAME, 0);
-		String key = prefs.getString(ACCESS_KEY_NAME, null);
-		String secret = prefs.getString(ACCESS_SECRET_NAME, null);
-		if (key != null && secret != null) {
-			String[] ret = new String[2];
-			ret[0] = key;
-			ret[1] = secret;
-			return ret;
-		} else {
-			return null;
-		}
-	}
-
-	/**
-	 * Shows keeping the access keys returned from Trusted Authenticator in a
-	 * local store, rather than storing user name & password, and
-	 * re-authenticating each time (which is not to be done, ever).
-	 */
-	private void storeKeys(String key, String secret) {
-		// Save the access key for later
-		SharedPreferences prefs = getSharedPreferences(ACCOUNT_PREFS_NAME, 0);
-		Editor edit = prefs.edit();
-		edit.putString(ACCESS_KEY_NAME, key);
-		edit.putString(ACCESS_SECRET_NAME, secret);
-		edit.commit();
-	}
-
-	private void clearKeys() {
-		SharedPreferences prefs = getSharedPreferences(ACCOUNT_PREFS_NAME, 0);
-		Editor edit = prefs.edit();
-		edit.clear();
-		edit.commit();
-	}
-
-	private AndroidAuthSession buildSession() {
-		AppKeyPair appKeyPair = new AppKeyPair(APP_KEY, APP_SECRET);
-		AndroidAuthSession session;
-
-		String[] stored = getKeys();
-		if (stored != null) {
-			AccessTokenPair accessToken = new AccessTokenPair(stored[0],
-					stored[1]);
-			session = new AndroidAuthSession(appKeyPair, ACCESS_TYPE,
-					accessToken);
-		} else {
-			session = new AndroidAuthSession(appKeyPair, ACCESS_TYPE);
-		}
-
-		return session;
-	}
 
 }
