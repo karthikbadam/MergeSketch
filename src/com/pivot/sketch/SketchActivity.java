@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import com.dropbox.client2.DropboxAPI;
@@ -55,6 +56,8 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 import android.widget.CompoundButton.OnCheckedChangeListener;
+import edu.pivot.cluster.Aggregator;
+import edu.pivot.cluster.Cluster;
 import edu.pivot.history.HistoryBrowser;
 
 public class SketchActivity extends Activity {
@@ -64,6 +67,7 @@ public class SketchActivity extends Activity {
 	// main UI -- all buttons 
 	//private SketchView view;
 	private MergeView view;
+	private MergeView view2; 
 	
 	private RelativeLayout tabs;
 	ImageButton startNewSession;
@@ -160,7 +164,7 @@ public class SketchActivity extends Activity {
 		params2.width = 2*width/5; 
 		params2.height = 3*height/4;
 				
-		MergeView view2 = new MergeView(this, 2*width/5, 3*height/4);
+	    view2 = new MergeView(this, 2*width/5, 3*height/4);
 		sketching.addView(view2, params2);
 		view2.openBitmap("sketch2.xml");
 		
@@ -221,12 +225,27 @@ public class SketchActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				Bundle stroke_data = new Bundle();
-				stroke_data.putParcelable("layer", view.mLayer);
-				Intent intent = new Intent(mContext, HistoryBrowser.class);
-				intent.putExtras(stroke_data);
-				final int result = 1;
-				startActivityForResult(intent, result);
+				
+				Aggregator a1 = new Aggregator(view.mLayer);
+				Aggregator a2 = new Aggregator(view2.mLayer);
+					
+				int clusterNumber1 = view.mLayer.numberOfStrokes();
+				int clusterNumber2 = view2.mLayer.numberOfStrokes();
+				
+				ArrayList<Cluster> clusters1 = a1.aggregate(10);
+				ArrayList<Cluster> clusters2 = a2.aggregate(10);
+				
+				//now add this to the interface
+				view.addClusters(clusters1);
+				view2.addClusters(clusters2);
+				
+				
+//				Bundle stroke_data = new Bundle();
+//				stroke_data.putParcelable("layer", view.mLayer);
+//				Intent intent = new Intent(mContext, HistoryBrowser.class);
+//				intent.putExtras(stroke_data);
+//				final int result = 1;
+//				startActivityForResult(intent, result);
 			}
 		});
 		

@@ -32,7 +32,7 @@ public class Aggregator {
 
 		}
 
-		for (int i = 0; i < totalHistorySize - 1 - clusterNumber + 1; i++) {
+		for (int i = 0; i < totalHistorySize - clusterNumber; i++) {
 			// *******find out the min distance and index for the right node
 			int minIndex = getMinDistanceIndex();
 
@@ -61,8 +61,7 @@ public class Aggregator {
 
 			clusters.set(minIndex - 1, newCluster);
 			clusters.remove(minIndex);
-			// clusters.remove(minIndex-1);
-
+			
 		}
 
 		System.out.println("CLuster size " + clusters.size());

@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -16,6 +17,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import edu.pivot.cluster.Cluster;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -26,6 +28,8 @@ import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.RectF;
+import android.graphics.Paint.Style;
 import android.os.Environment;
 import android.text.Editable;
 import android.view.MotionEvent;
@@ -58,6 +62,12 @@ public class MergeView extends View implements
 	int height = 0; 
 	
 	Paint mPaint;
+	Paint boxHoverPaint;
+	Paint boxPaint;
+	
+	ArrayList<Cluster> clusters = new ArrayList<Cluster>();
+	Boolean[] hovers; 
+	Boolean[] checked; 
 	
 	@SuppressLint("NewApi")
 	public MergeView(Context c, int width, int height) {
@@ -83,8 +93,54 @@ public class MergeView extends View implements
 		mPaint.setPathEffect(new DashPathEffect(new float[] {5,10}, 0));
 		mPaint.setAntiAlias(true);
 		mPaint.setDither(true);	
+		
+		boxHoverPaint = new Paint();
+		boxHoverPaint.setStrokeWidth(1);
+		boxHoverPaint.setColor(Color.argb(100, 233, 226, 218));
+		boxHoverPaint.setAntiAlias(true);
+		boxHoverPaint.setDither(true);
+		boxHoverPaint.setStrokeJoin(Paint.Join.ROUND);
+		boxHoverPaint.setStrokeCap(Paint.Cap.ROUND);
+		boxHoverPaint.setStyle(Style.STROKE);
+		
+		boxPaint = new Paint();
+		boxPaint.setStrokeWidth(1);
+		boxPaint.setColor(Color.argb(100, 201, 193, 185));
+		boxPaint.setAntiAlias(true);
+		boxPaint.setDither(true);
+		boxPaint.setStrokeJoin(Paint.Join.ROUND);
+		boxPaint.setStrokeCap(Paint.Cap.ROUND);
+		boxPaint.setStyle(Style.FILL);
+		
+		this.setOnHoverListener(new OnHoverListener() {
+
+			@Override
+			public boolean onHover(View v, MotionEvent event) {
+				
+				float x = event.getX(0);
+				float y = event.getY(0);
+				
+				//check in the clusters
+				
+				int count = 0; 
+				for (Cluster tempCluster : clusters) {
+					hovers[count] = false; 
+					if (x > tempCluster.boundingbox.leftBoundary && x < tempCluster.boundingbox.rightBoundary) {
+						if (y > tempCluster.boundingbox.upperBoundary && y < tempCluster.boundingbox.bottomBoundary) {
+							hovers[count] = true;
+						} 
+					}
+					count++;
+				}
+				
+				invalidate();
+				return true;
+			}
+			
+		});
 	}
 	
+
 	
 	//Save as an image 
 	public void openBitmap(String filename) {
@@ -175,6 +231,20 @@ public class MergeView extends View implements
 		}
 	}
 	
+	//Add segmented clusters 
+	public void addClusters(ArrayList<Cluster> clusters) {
+		this.clusters = clusters; 
+		hovers = new Boolean[clusters.size()];
+		checked = new Boolean[clusters.size()];
+		
+		for (int i = 0; i < clusters.size(); i++) {
+			hovers[i] = false; 
+			checked[i] = false; 
+		}
+		invalidate();
+	}
+	
+	
 	public void setLayer(Layer layer){
 		mLayer = layer;
 		numberOfStrokes = layer.numberOfStrokes();
@@ -212,6 +282,61 @@ public class MergeView extends View implements
 				canvas.drawPath(currentStroke.mPath, currentStroke.mPaint);
 			}
 		}
+		
+		
+		Paint mPaint_t = new Paint();
+		mPaint_t.setStrokeWidth(1);
+		mPaint_t.setColor(Color.BLUE);
+		mPaint_t.setTextSize(10);
+		
+		int count = 0;
+		for (Cluster tempCluster : this.clusters) {
+			
+			
+			if (checked[count]) {
+				
+				canvas.drawRect(new RectF(
+						tempCluster.boundingbox.leftBoundary,
+						tempCluster.boundingbox.upperBoundary,
+						tempCluster.boundingbox.rightBoundary,
+						tempCluster.boundingbox.bottomBoundary), boxPaint);
+				
+				canvas.drawText("" + count,
+						tempCluster.boundingbox.leftBoundary - 8,
+						tempCluster.boundingbox.upperBoundary - 8, mPaint_t);
+			
+			} else if (hovers[count]) {
+				
+				boxHoverPaint.setStyle(Style.FILL);
+				
+				canvas.drawRect(new RectF(
+						tempCluster.boundingbox.leftBoundary,
+						tempCluster.boundingbox.upperBoundary,
+						tempCluster.boundingbox.rightBoundary,
+						tempCluster.boundingbox.bottomBoundary), boxHoverPaint);
+				
+				canvas.drawText("" + count,
+						tempCluster.boundingbox.leftBoundary - 8,
+						tempCluster.boundingbox.upperBoundary - 8, mPaint_t);
+				
+			} else {
+				
+				boxHoverPaint.setStyle(Style.STROKE);
+				
+				canvas.drawRect(new RectF(
+						tempCluster.boundingbox.leftBoundary,
+						tempCluster.boundingbox.upperBoundary,
+						tempCluster.boundingbox.rightBoundary,
+						tempCluster.boundingbox.bottomBoundary), boxHoverPaint);
+				
+				canvas.drawText("" + count,
+						tempCluster.boundingbox.leftBoundary - 8,
+						tempCluster.boundingbox.upperBoundary - 8, mPaint_t);
+				
+			}
+			count++;
+		}
+
 	}
 
 	public void redo() {
@@ -266,12 +391,28 @@ public class MergeView extends View implements
 	boolean start = false;
 	
 	
-	
 	// Register touch events
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		float x = event.getX(0);
 		float y = event.getY(0);
+		
+		int count = 0; 
+		for (Cluster tempCluster : clusters) {
+			checked[count] = false; 
+			if (x > tempCluster.boundingbox.leftBoundary && x < tempCluster.boundingbox.rightBoundary) {
+				if (y > tempCluster.boundingbox.upperBoundary && y < tempCluster.boundingbox.bottomBoundary) {
+					if (checked[count] == false) {
+						checked[count] = true;
+					} else {
+						checked[count] = false; 	
+					}
+				} 
+			}
+			count++;
+		}
+		
+		invalidate();
 		
 		/*
 		if (tabs.getVisibility() == View.VISIBLE) {
@@ -294,54 +435,54 @@ public class MergeView extends View implements
 		}
 
 		*/
-		switch (event.getAction()) {
-
-		case MotionEvent.ACTION_DOWN:
-
-			if (start == true) {
-				break;
-			}
-			mStroke = new Stroke();
-			mStroke.setStrokeType(Paint.Style.STROKE);
-			mStroke.setStrokeWidth(brush_width);
-			mStroke.setColor(color);
-			mStroke.mPaint.setAlpha(opacity);
-			mPath = mStroke.getPath();
-
-			// get rid of the undo -ed strokes
-			if (numberOfStrokes < mLayer.numberOfStrokes()) {
-				for (int i = mLayer.numberOfStrokes() - 1; i > numberOfStrokes - 1; i--) {
-					mLayer.removeStroke(i);
-				}
-			}
-
-			mLayer.addStroke(mStroke);
-			numberOfStrokes++;
-			mStroke.addTouchPoint(x, y, false);
-			touch_start(x, y);
-			invalidate();
-			break;
-
-		case MotionEvent.ACTION_MOVE:
-			if (start == true) {
-				break;
-			}
-			mStroke.addTouchPoint(x, y, false);
-			touch_move(x, y);
-			invalidate();
-			break;
-
-		case MotionEvent.ACTION_UP:
-			if (start == true) {
-				start = false;
-				break;
-			}
-			boolean is_end = true;
-			mStroke.addTouchPoint(x, y, is_end);
-			touch_up(x, y);
-			invalidate();
-			break;
-		}
+//		switch (event.getAction()) {
+//
+//		case MotionEvent.ACTION_DOWN:
+//
+//			if (start == true) {
+//				break;
+//			}
+//			mStroke = new Stroke();
+//			mStroke.setStrokeType(Paint.Style.STROKE);
+//			mStroke.setStrokeWidth(brush_width);
+//			mStroke.setColor(color);
+//			mStroke.mPaint.setAlpha(opacity);
+//			mPath = mStroke.getPath();
+//
+//			// get rid of the undo -ed strokes
+//			if (numberOfStrokes < mLayer.numberOfStrokes()) {
+//				for (int i = mLayer.numberOfStrokes() - 1; i > numberOfStrokes - 1; i--) {
+//					mLayer.removeStroke(i);
+//				}
+//			}
+//
+//			mLayer.addStroke(mStroke);
+//			numberOfStrokes++;
+//			mStroke.addTouchPoint(x, y, false);
+//			touch_start(x, y);
+//			invalidate();
+//			break;
+//
+//		case MotionEvent.ACTION_MOVE:
+//			if (start == true) {
+//				break;
+//			}
+//			mStroke.addTouchPoint(x, y, false);
+//			touch_move(x, y);
+//			invalidate();
+//			break;
+//
+//		case MotionEvent.ACTION_UP:
+//			if (start == true) {
+//				start = false;
+//				break;
+//			}
+//			boolean is_end = true;
+//			mStroke.addTouchPoint(x, y, is_end);
+//			touch_up(x, y);
+//			invalidate();
+//			break;
+//		}
 
 		return true;
 	}

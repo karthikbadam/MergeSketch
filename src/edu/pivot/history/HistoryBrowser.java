@@ -149,24 +149,35 @@ public class HistoryBrowser extends Activity {
 				mPaint.setStrokeCap(Paint.Cap.ROUND);
 				mPaint.setStyle(Style.STROKE);
 
-				Paint mPaint_t = new Paint();
-				mPaint_t.setStrokeWidth(2);
-				mPaint_t.setColor(Color.BLUE);
-				mPaint_t.setTextSize(25);
+							
 
-				int count = 1;
-				for (Cluster tempCluster : clusters) {
-					canvas.drawRect(new RectF(
-							tempCluster.boundingbox.leftBoundary,
-							tempCluster.boundingbox.upperBoundary,
-							tempCluster.boundingbox.rightBoundary,
-							tempCluster.boundingbox.bottomBoundary), mPaint);
-					canvas.drawText("" + count,
-							tempCluster.boundingbox.leftBoundary - 8,
-							tempCluster.boundingbox.upperBoundary - 8, mPaint_t);
-					count++;
-				}
-
+			}
+			
+			Paint mPaint = new Paint();
+			mPaint.setStrokeWidth(2);
+			mPaint.setColor(Color.DKGRAY);
+			mPaint.setAntiAlias(true);
+			mPaint.setDither(true);
+			mPaint.setStrokeJoin(Paint.Join.ROUND);
+			mPaint.setStrokeCap(Paint.Cap.ROUND);
+			mPaint.setStyle(Style.STROKE);
+			
+			Paint mPaint_t = new Paint();
+			mPaint_t.setStrokeWidth(2);
+			mPaint_t.setColor(Color.BLUE);
+			mPaint_t.setTextSize(25);
+			
+			int count = 1;
+			for (Cluster tempCluster : clusters) {
+				canvas.drawRect(new RectF(
+						tempCluster.boundingbox.leftBoundary,
+						tempCluster.boundingbox.upperBoundary,
+						tempCluster.boundingbox.rightBoundary,
+						tempCluster.boundingbox.bottomBoundary), mPaint);
+				canvas.drawText("" + count,
+						tempCluster.boundingbox.leftBoundary - 8,
+						tempCluster.boundingbox.upperBoundary - 8, mPaint_t);
+				count++;
 			}
 
 		}
