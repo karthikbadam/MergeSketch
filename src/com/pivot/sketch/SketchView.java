@@ -46,6 +46,8 @@ public class SketchView extends View implements
 
 	public Layer mLayer;
 
+	public AnnotateLayer aLayer;
+
 	// initial brush width
 	private int brush_width = 4;
 	private Stroke mStroke;
@@ -91,6 +93,7 @@ public class SketchView extends View implements
 		this.other = other;
 
 		mLayer = new Layer();
+		aLayer = new AnnotateLayer();
 
 		this.viewScale = scale;
 
@@ -223,12 +226,19 @@ public class SketchView extends View implements
 
 		// draw all the strokes
 		canvas.drawRect(1, 1, this.width - 1, this.height - 1, mPaint);
-		;
+		
 		for (int i = 0; i < numberOfStrokes; i++) {
 			if (i < mLayer.numberOfStrokes()) {
 				Stroke currentStroke = mLayer.getStroke(i);
 				canvas.drawPath(currentStroke.mPath, currentStroke.mPaint);
 			}
+		}
+		
+		for (int i = 0; i < aLayer.numberOfStrokes(); i++) {
+				Stroke currentStroke = aLayer.getStroke(i);
+				currentStroke.mPaint.setColor(Color.GRAY);
+				canvas.drawPath(currentStroke.mPath, currentStroke.mPaint);
+			
 		}
 
 		// mPaint for text
@@ -501,6 +511,8 @@ public class SketchView extends View implements
 
 					if (color == -16777216)
 						mLayer.addStroke(stroke);
+					else 
+						aLayer.addStroke(stroke);
 				}
 
 			}

@@ -326,28 +326,6 @@ public class MergeView extends View implements
 		float minArea = 100000000;
 		int minIndex = -1;
 		
-		if (event.getAction() == MotionEvent.ACTION_MOVE) {
-
-			for (Cluster tempCluster : clusters) {
-				checked[count] = false;
-				if (x > tempCluster.boundingbox.leftBoundary
-						&& x < tempCluster.boundingbox.rightBoundary) {
-					if (y > tempCluster.boundingbox.upperBoundary
-							&& y < tempCluster.boundingbox.bottomBoundary) {
-
-						if (tempCluster.getArea() < minArea) {
-							minArea = tempCluster.getArea();
-							minIndex = count;
-						}
-
-					}
-				}
-				count++;
-			}
-
-			
-		}
-		
 
 		if (event.getAction() == MotionEvent.ACTION_UP) {
 

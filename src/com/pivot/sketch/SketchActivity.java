@@ -366,7 +366,7 @@ public class SketchActivity extends Activity {
 
 				if (selection != null) {
 					mergeView.addSelection(selection);
-					LOG += selection.boundingbox.leftBoundary + ","
+					LOG += "Left: "+ selection.boundingbox.leftBoundary + ","
 							+ selection.boundingbox.rightBoundary + ","
 							+ selection.boundingbox.upperBoundary + ","
 							+ selection.boundingbox.bottomBoundary + ";";
@@ -374,8 +374,13 @@ public class SketchActivity extends Activity {
 
 				selection = viewRight.getSelection();
 
-				if (selection != null)
+				if (selection != null) {
 					mergeView.addSelection(selection);
+					LOG += "Right: "+ selection.boundingbox.leftBoundary + ","
+						+ selection.boundingbox.rightBoundary + ","
+						+ selection.boundingbox.upperBoundary + ","
+						+ selection.boundingbox.bottomBoundary + ";";
+				}
 
 			}
 		});
@@ -514,7 +519,7 @@ public class SketchActivity extends Activity {
 
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
-		alert.setTitle("Enter Filename");
+		alert.setTitle("Write Files");
 		alert.setMessage("");
 
 		// Set an EditText view to get user input
@@ -531,7 +536,7 @@ public class SketchActivity extends Activity {
 				
 				FileOutputStream outStream = null;
 				File mediaStorageDir = new File(Environment
-						.getExternalStorageDirectory(), "MergeStudy");
+						.getExternalStorageDirectory(), "ClusterStudy");
 				mediaStorageDir.mkdirs();
 
 				mFile = new File(mediaStorageDir.getPath(), uuid + ".PNG");
@@ -554,6 +559,7 @@ public class SketchActivity extends Activity {
 				      Toast.makeText(mContext.getApplicationContext(),
 				          "Report successfully saved to: " +mFile2.getAbsolutePath(),
 				          Toast.LENGTH_LONG).show();
+				      writer.close();
 
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
