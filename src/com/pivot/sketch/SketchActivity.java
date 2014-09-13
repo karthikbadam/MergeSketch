@@ -1,13 +1,17 @@
 package com.pivot.sketch;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.DropboxAPI.Entry;
@@ -18,6 +22,7 @@ import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.client2.session.AppKeyPair;
 import com.dropbox.client2.session.TokenPair;
 import com.dropbox.client2.session.Session.AccessType;
+import com.pivot.merge.R;
 import com.pivot.storage.ReadFromDropbox;
 import com.pivot.storage.WriteIndexFile;
 import com.pivot.storage.WriteToDropbox;
@@ -26,9 +31,13 @@ import com.pivot.storage.ReadFromDropbox.FileDownloadListener;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.SystemClock;
+import android.os.Vibrator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -40,6 +49,7 @@ import android.graphics.Point;
 import android.text.Editable;
 import android.util.Log;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -47,6 +57,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -63,67 +75,69 @@ import edu.pivot.history.HistoryBrowser;
 public class SketchActivity extends Activity {
 
 	Context mContext;
-		
-	// main UI -- all buttons 
-	//private SketchView view;
-	private MergeView view;
-	private MergeView view2; 
-	
+
+	// main UI -- all buttons
+	// private SketchView view;
+	private SketchView viewLeft;
+	private SketchView viewRight;
+
 	private RelativeLayout tabs;
 	ImageButton startNewSession;
 	ImageButton browser;
 	ImageButton checkout;
 	ImageButton commit;
 	ImageButton branch;
-	ImageButton color;
-	ImageButton undo;
+	// ImageButton color;
+	// ImageButton undo;
 	ImageButton redo;
-	ImageButton clear;
-	ImageButton history;
+	// ImageButton clear;
+	ImageButton delete;
 	ImageButton save;
-	
-	//current file
+
+	ImageButton grow;
+	ImageButton shrink;
+	ImageButton maximize;
+
+	ProgressDialog dialog;
+
+	MergeView mergeView;
+
+	Handler updateBarHandler;
+
+	String LOG;
+
+	// current file
 	File mFile = null;
-	
-	//VICED current branch
-	int mBranchNumber = 0;
-	boolean isBranch = false;
 
-	//Dropbox folder to store the sketches
-	//public String sessionName = "/VICED/one";
-
-	//App key and secret from Dropbox
-	//final static private String APP_KEY = "ewvxxygoe6o8qax";
-	//final static private String APP_SECRET = "urs4c0ylkf9ccew";
-
-	//Accessing entire Dropbox
-	//final static private AccessType ACCESS_TYPE = AccessType.DROPBOX;
-
-	// You don't need to change these, leave them alone.
-	//final static private String ACCOUNT_PREFS_NAME = "prefs";
-	//final static private String ACCESS_KEY_NAME = "ACCESS_KEY";
-	//final static private String ACCESS_SECRET_NAME = "ACCESS_SECRET";
-
-	//DropboxAPI
-	//DropboxAPI<AndroidAuthSession> mApi;
-
-	
 	boolean firstTime = true;
-	
+
+	int width;
+	int height;
+
+	private Vibrator myVib;
+
+	String filename1 = "a.xml";
+	String filename2 = "b.xml";
+
+	protected long startTime;
+
 	@SuppressLint("NewApi")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
-		//Android Application context
+
+		// Android Application context
 		mContext = this;
-		
-		//Time
+
+		// Time
 		Date date = new Date();
-        DateFormat df = new SimpleDateFormat("dd-kk-mm-ss");
-        String newFile = df.format(date);
-       
-        
+		DateFormat df = new SimpleDateFormat("dd-kk-mm-ss");
+		String newFile = df.format(date);
+
+		myVib = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
+
+		dialog = new ProgressDialog(mContext);
+
 		// Creating the UI
 		LayoutInflater layout = (LayoutInflater) this
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -131,128 +145,305 @@ public class SketchActivity extends Activity {
 		// Read the content of main_ui xml file
 		ViewGroup v = (ViewGroup) layout.inflate(R.layout.main_ui, null);
 
-		
 		tabs = (RelativeLayout) v.findViewById(R.id.tab_layout);
 
 		// Get the size of the sketch layout
 		RelativeLayout sketching = (RelativeLayout) v
 				.findViewById(R.id.sketch_view);
-		
+
 		Display display = getWindowManager().getDefaultDisplay();
 		Point size = new Point();
 		display.getSize(size);
-		int width = size.x;
-		int height = size.y;
+		width = size.x;
+		height = size.y;
 
-		//SketchView is the part of the UI 
-		//view = new SketchView(this, width, height);
-		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-		params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
-		params.leftMargin = 20;
-		params.topMargin = 20; 
-		params.width = 2*width/5; 
-		params.height = 3*height/4;
-				
-		view = new MergeView(this, 2*width/5, 3*height/4);
-		sketching.addView(view, params);
-		view.openBitmap("sketch1.xml");
-		
-		RelativeLayout.LayoutParams params2 = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+		updateBarHandler = new Handler();
+
+		// Sketch on the left
+		RelativeLayout.LayoutParams params1 = new RelativeLayout.LayoutParams(
+				ViewGroup.LayoutParams.WRAP_CONTENT,
+				ViewGroup.LayoutParams.WRAP_CONTENT);
+		params1.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+		params1.leftMargin = 0;
+		params1.topMargin = 0;
+		params1.width = width / 2 - 20;
+		params1.height = 3 * height / 4;
+
+		viewLeft = new SketchView(this, width / 2 - 20, 3 * height / 4,
+				(float) 0.5, viewRight);
+
+		sketching.addView(viewLeft, params1);
+
+		// Sketch on the right
+		RelativeLayout.LayoutParams params2 = new RelativeLayout.LayoutParams(
+				ViewGroup.LayoutParams.WRAP_CONTENT,
+				ViewGroup.LayoutParams.WRAP_CONTENT);
 		params2.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
-		params2.leftMargin = 3*width/5 - 60;
-		params2.topMargin = 20; 
-		params2.width = 2*width/5; 
-		params2.height = 3*height/4;
-				
-	    view2 = new MergeView(this, 2*width/5, 3*height/4);
-		sketching.addView(view2, params2);
-		view2.openBitmap("sketch2.xml");
-		
-		
-		RelativeLayout.LayoutParams params3 = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+		params2.leftMargin = width / 2 + 20;
+		params2.topMargin = 0;
+		params2.width = width / 2 - 20;
+		params2.height = 3 * height / 4;
+
+		viewRight = new SketchView(this, width / 2 - 20, 3 * height / 4,
+				(float) 0.5, viewLeft);
+		sketching.addView(viewRight, params2);
+		viewLeft.other = viewRight;
+		// viewRight.openBitmap("b.xml");
+
+		// Alert dialog asking for sketch xmls
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setTitle("Enter sketch names");
+
+		// Set an EditText view to get user input
+		LinearLayout l1 = new LinearLayout(this);
+		l1.setOrientation(LinearLayout.VERTICAL);
+		final EditText input1 = new EditText(this);
+		final EditText input2 = new EditText(this);
+		l1.addView(input1);
+		l1.addView(input2);
+		alert.setView(l1);
+
+		final AlertDialog.Builder alert2 = new AlertDialog.Builder(this);
+		alert2.setTitle("Clustering is done");
+
+		alert2.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int whichButton) {
+				startTime = SystemClock.uptimeMillis();
+			}
+		});
+
+		alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int whichButton) {
+				Editable value = input1.getText();
+				viewLeft.openBitmap(value.toString());
+
+				Editable value2 = input2.getText();
+				viewRight.openBitmap(value2.toString());
+
+				final Aggregator a1 = new Aggregator(viewLeft.mLayer);
+				final Aggregator a2 = new Aggregator(viewRight.mLayer);
+
+				int clusterNumber1 = viewLeft.mLayer.numberOfStrokes();
+				int clusterNumber2 = viewRight.mLayer.numberOfStrokes();
+
+				ArrayList<Cluster> clusters1 = a1
+						.aggregate((int) clusterNumber1);
+				viewLeft.addClusters(clusters1);
+
+				ArrayList<Cluster> clusters2 = a2
+						.aggregate((int) clusterNumber2);
+
+				// now add this to the interface
+				viewRight.addClusters(clusters2);
+
+				alert2.show();
+
+				LOG = "" + uuid + ";" + value.toString() + ","
+						+ value2.toString()+";";
+
+			}
+		});
+
+		alert.show();
+
+		// Merged layout
+		RelativeLayout.LayoutParams params3 = new RelativeLayout.LayoutParams(
+				ViewGroup.LayoutParams.WRAP_CONTENT,
+				ViewGroup.LayoutParams.WRAP_CONTENT);
 		params3.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
-		params3.leftMargin = width/2 - width/8 - 20;
-		params3.topMargin = 3*height/4; 
-		params3.width = width/4; 
-		params3.height = height/4;
-				
-		MergeView view3 = new MergeView(this, width/4, height/4);
-		sketching.addView(view3, params3);
-		
-			
-		color = (ImageButton) v.findViewById(R.id.button4);
-		undo = (ImageButton) v.findViewById(R.id.button5);
+		params3.leftMargin = width / 4;
+		params3.topMargin = height / 2;
+		params3.width = width / 2;
+		params3.height = height / 2;
+
+		mergeView = new MergeView(this, width / 2, height / 2, (float) 1);
+		sketching.addView(mergeView, params3);
+
+		// color = (ImageButton) v.findViewById(R.id.button4);
+		// undo = (ImageButton) v.findViewById(R.id.button5);
 		redo = (ImageButton) v.findViewById(R.id.button6);
-		clear = (ImageButton) v.findViewById(R.id.button7);
-		history = (ImageButton) v.findViewById(R.id.button8);
+		// clear = (ImageButton) v.findViewById(R.id.button7);
+		delete = (ImageButton) v.findViewById(R.id.button8);
 		save = (ImageButton) v.findViewById(R.id.button9);
 
-		
-		color.setOnClickListener(new View.OnClickListener() {
+		grow = (ImageButton) v.findViewById(R.id.button7);
+		shrink = (ImageButton) v.findViewById(R.id.button10);
+		maximize = (ImageButton) v.findViewById(R.id.button11);
+
+		// undo.setOnClickListener(new View.OnClickListener() {
+		//
+		// @Override
+		// public void onClick(View v) {
+		//
+		// }
+		// });
+
+		grow.setOnClickListener(new View.OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
-				view.changeColor();
+				myVib.vibrate(50);
+
+				Cluster selection = viewLeft.getSelection();
+
+				if (selection != null && selection.parent != null) {
+					viewLeft.currentSelection = selection.parent;
+					viewLeft.currentSelection.sliceLayerForTouchPoints();
+					viewLeft.currentSelection.buildStrokes(1);
+					viewLeft.invalidate();
+
+					System.out.println("Blah "
+							+ viewLeft.currentSelection.startIndex + ", "
+							+ viewLeft.currentSelection.endIndex);
+				}
+
+				selection = viewRight.getSelection();
+
+				if (selection != null && selection.parent != null) {
+					viewRight.currentSelection = selection.parent;
+					viewRight.currentSelection.sliceLayerForTouchPoints();
+					viewRight.currentSelection.buildStrokes(1);
+					viewRight.invalidate();
+				}
 			}
 		});
-		
-		undo.setOnClickListener(new View.OnClickListener() {
+
+		shrink.setOnClickListener(new View.OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
-				view.undo();
+
+				myVib.vibrate(50);
+
+				Cluster selection = viewLeft.getSelection();
+
+				if (selection != null) {
+					viewLeft.currentSelection = selection.leftChild;
+					viewLeft.invalidate();
+				}
+
+				selection = viewRight.getSelection();
+
+				if (selection != null)
+					viewRight.currentSelection = selection.leftChild;
+				viewRight.invalidate();
+
 			}
 		});
-		
+
+		maximize.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				myVib.vibrate(50);
+
+				RelativeLayout.LayoutParams params3 = new RelativeLayout.LayoutParams(
+						ViewGroup.LayoutParams.WRAP_CONTENT,
+						ViewGroup.LayoutParams.WRAP_CONTENT);
+				params3.addRule(RelativeLayout.ALIGN_PARENT_LEFT,
+						RelativeLayout.TRUE);
+				params3.leftMargin = width / 4;
+				params3.topMargin = height / 2 - 30;
+				params3.width = width / 2 + 30;
+				params3.height = height / 2 + 30;
+
+				mergeView.set(width / 2 + 30, height / 2 + 30, (float) 1);
+
+				mergeView.setLayoutParams(params3);
+			}
+		});
+
 		redo.setOnClickListener(new View.OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
-				view.redo();
+				// COPY THE SELECTED SKETCH CONTENT
+				myVib.vibrate(50);
+				Cluster selection = viewLeft.getSelection();
+
+				if (selection != null) {
+					mergeView.addSelection(selection);
+					LOG += selection.boundingbox.leftBoundary + ","
+							+ selection.boundingbox.rightBoundary + ","
+							+ selection.boundingbox.upperBoundary + ","
+							+ selection.boundingbox.bottomBoundary + ";";
+				}
+
+				selection = viewRight.getSelection();
+
+				if (selection != null)
+					mergeView.addSelection(selection);
+
 			}
 		});
-		
-		clear.setOnClickListener(new View.OnClickListener() {
+
+		// clear.setOnClickListener(new View.OnClickListener() {
+		//
+		// @Override
+		// public void onClick(View v) {
+		//
+		// }
+		// });
+
+		delete.setOnClickListener(new View.OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
-				view.clear();
-				
-			}
-		});
-		
-		history.setOnClickListener(new View.OnClickListener() {
+				myVib.vibrate(50);
 
-			@Override
-			public void onClick(View v) {
-				
-				Aggregator a1 = new Aggregator(view.mLayer);
-				Aggregator a2 = new Aggregator(view2.mLayer);
-					
-				int clusterNumber1 = view.mLayer.numberOfStrokes();
-				int clusterNumber2 = view2.mLayer.numberOfStrokes();
-				
-				ArrayList<Cluster> clusters1 = a1.aggregate(10);
-				ArrayList<Cluster> clusters2 = a2.aggregate(10);
-				
-				//now add this to the interface
-				view.addClusters(clusters1);
-				view2.addClusters(clusters2);
-				
-				
-//				Bundle stroke_data = new Bundle();
-//				stroke_data.putParcelable("layer", view.mLayer);
-//				Intent intent = new Intent(mContext, HistoryBrowser.class);
-//				intent.putExtras(stroke_data);
-//				final int result = 1;
-//				startActivityForResult(intent, result);
+				mergeView.deleteActiveSelection();
+
+				// if (!dialog.isShowing()) {
+				//
+				// dialog.setTitle("Sketcholution at work!");
+				//
+				// dialog.setMessage("Clustering the sketch. Please wait...");
+				// dialog.setProgressStyle(dialog.STYLE_HORIZONTAL);
+				// dialog.setProgress(0);
+				// dialog.show();
+				//
+				// final Aggregator a1 = new Aggregator(viewLeft.mLayer,
+				// dialog);
+				// final Aggregator a2 = new Aggregator(viewRight.mLayer,
+				// dialog);
+				//
+				// int clusterNumber1 = viewLeft.mLayer.numberOfStrokes();
+				// int clusterNumber2 = viewRight.mLayer.numberOfStrokes();
+				//
+				// dialog.setMax(100);
+				//
+				// ArrayList<Cluster> clusters1 = a1
+				// .aggregate((int) clusterNumber1, updateBarHandler);
+				// viewLeft.addClusters(clusters1);
+				//
+				// ArrayList<Cluster> clusters2 = a2
+				// .aggregate((int) clusterNumber2, updateBarHandler);
+				// // now add this to the interface
+				// viewRight.addClusters(clusters2);
+				//
+				// showToast("Sketcholution at work");
+				//
+				// dialog.dismiss();
+				//
+				// }
+
+				// Bundle stroke_data = new Bundle();
+				// stroke_data.putParcelable("layer", view.mLayer);
+				// Intent intent = new Intent(mContext, HistoryBrowser.class);
+				// intent.putExtras(stroke_data);
+				// final int result = 1;
+				// startActivityForResult(intent, result);
 			}
 		});
-		
+
 		save.setOnClickListener(new View.OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
+				// save final sketch as bitmap
 				saveBitmap();
 			}
 		});
@@ -264,32 +455,17 @@ public class SketchActivity extends Activity {
 		super.onPause();
 	}
 
+	@SuppressLint("NewApi")
 	@Override
 	public void onResume() {
 		super.onResume();
 		mContext = this;
-		isBranch = false;
-		//AndroidAuthSession session = mApi.getSession();
-
-		// The next part must be inserted in the onResume() method of the
-		// activity from which session.startAuthentication() was called, so
-		// that Dropbox authentication completes properly.
-//		if (session.authenticationSuccessful()) {
-//			try {
-//				// Mandatory call to complete the auth
-//				session.finishAuthentication();
-//				// Store it locally in our app for later use
-//				TokenPair tokens = session.getAccessTokenPair();
-//				storeKeys(tokens.key, tokens.secret);
-//				mLoggedIn = true;
-//				showToast("Session Authorized");
-//			} catch (IllegalStateException e) {
-//				showToast("Couldn't authenticate with Dropbox:"
-//						+ e.getLocalizedMessage());
-//				System.out.println("Error authenticating");
-//			}
-//		}
-
+		Display display = getWindowManager().getDefaultDisplay();
+		Point size = new Point();
+		display.getSize(size);
+		width = size.x;
+		height = size.y;
+		dialog = new ProgressDialog(mContext);
 	}
 
 	@Override
@@ -319,7 +495,7 @@ public class SketchActivity extends Activity {
 								public void onClick(DialogInterface dialog,
 										int which) {
 									// Exit the activity
-									//logOut();
+									// logOut();
 									android.os.Process
 											.killProcess(android.os.Process
 													.myPid());
@@ -330,9 +506,10 @@ public class SketchActivity extends Activity {
 		}
 		return super.onKeyDown(keyCode, event);
 	}
-	
-	
-	//Save as an image 
+
+	String uuid = UUID.randomUUID().toString();
+
+	// Save as an image
 	private void saveBitmap() {
 
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
@@ -342,27 +519,41 @@ public class SketchActivity extends Activity {
 
 		// Set an EditText view to get user input
 		final EditText input = new EditText(this);
-		alert.setView(input);
+		// alert.setView(input);
 
 		alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int whichButton) {
-				Editable value = input.getText();
+				// Editable value = input.getText();
 
+				long timeInMilliseconds = SystemClock.uptimeMillis() - startTime;
+				LOG+= "time; "+timeInMilliseconds; 
+				
 				FileOutputStream outStream = null;
 				File mediaStorageDir = new File(Environment
-						.getExternalStorageDirectory(), "MySketches");
+						.getExternalStorageDirectory(), "MergeStudy");
 				mediaStorageDir.mkdirs();
 
-				mFile = new File(mediaStorageDir.getPath(), value
-						.toString() + ".PNG");
-				view.draw(view.mCanvas);
+				mFile = new File(mediaStorageDir.getPath(), uuid + ".PNG");
+				File mFile2 = new File(mediaStorageDir.getPath(), uuid+".csv");
+				
+				
+				mergeView.draw(mergeView.mCanvas);
+
 				try {
 					outStream = new FileOutputStream(mFile);
-					view.mBitmap.compress(Bitmap.CompressFormat.PNG, 100,
+					
+					
+					mergeView.mBitmap.compress(Bitmap.CompressFormat.PNG, 100,
 							outStream);
 					outStream.flush();
 					outStream.close();
+					
+					BufferedWriter writer = new BufferedWriter(new FileWriter(mFile2, true));
+					writer.write(LOG);
+				      Toast.makeText(mContext.getApplicationContext(),
+				          "Report successfully saved to: " +mFile2.getAbsolutePath(),
+				          Toast.LENGTH_LONG).show();
 
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
@@ -399,87 +590,65 @@ public class SketchActivity extends Activity {
 			return true;
 
 		case R.id.clear:
-			view.clear();
 			return true;
 
 		case R.id.Color:
-			view.changeColor();
 			return true;
 
 		case R.id.undo:
-			view.undo();
 			return true;
 
 		case R.id.Redo:
-			view.redo();
 			return true;
 
 		case R.id.history:
-			Bundle stroke_data = new Bundle();
-			stroke_data.putParcelable("layer", view.mLayer);
-			Intent intent = new Intent(this, HistoryBrowser.class);
-			intent.putExtras(stroke_data);
-			final int result = 1;
-			startActivityForResult(intent, result);
 			return true;
-
 		}
+
 		return false;
 	}
 
-//	@Override
-//	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-//
-//		super.onActivityResult(requestCode, resultCode, data);
-//		String extraData = data.getStringExtra("ComingFrom");
-//		System.out.println(extraData);
-//
-//		if (extraData.equals("File Browser")) {
-//			Layer layer = data.getParcelableExtra("layer");
-//			System.out.println("layer " + layer.getStrokes().size());
-//			view.setLayer(layer);
-//
-//			String dir = data.getStringExtra("dir");
-//			sessionDir = dir;
-//
-//			if (dir.charAt(dir.length() - 1) == '/') {
-//				sessionName = dir.replace(dir.substring(dir.length() - 1), "");
-//			}
-//			System.out.println("Selected Dir " + dir);
-//			isBranch = data.getBooleanExtra("branch", true);
-//			mFileName = data.getStringExtra("filename");
-//			firstTime = false;
-//			/*
-//			int number_of_branches = data.getIntExtra("branchNumber", 0);
-//			if (isBranch == true) {
-//				mBranchNumber = number_of_branches + 1;
-//				mFileName = "branch" + mBranchNumber + ".xml";
-//			} else {
-//				mFileName = "main.xml";	
-//				
-//			}
-//			*/
-//			
-//			}
-//	}
-
-	// From here are the required dropbox functions
-
-//	private void logOut() {
-//		// Remove credentials from the session
-//		mApi.getSession().unlink();
-//
-//		// Clear our stored keys
-//		clearKeys();
-//		// Change UI state to display logged out version
-//		mLoggedIn = false;
-//	}
+	// @Override
+	// public void onActivityResult(int requestCode, int resultCode, Intent
+	// data) {
+	//
+	// super.onActivityResult(requestCode, resultCode, data);
+	// String extraData = data.getStringExtra("ComingFrom");
+	// System.out.println(extraData);
+	//
+	// if (extraData.equals("File Browser")) {
+	// Layer layer = data.getParcelableExtra("layer");
+	// System.out.println("layer " + layer.getStrokes().size());
+	// view.setLayer(layer);
+	//
+	// String dir = data.getStringExtra("dir");
+	// sessionDir = dir;
+	//
+	// if (dir.charAt(dir.length() - 1) == '/') {
+	// sessionName = dir.replace(dir.substring(dir.length() - 1), "");
+	// }
+	// System.out.println("Selected Dir " + dir);
+	// isBranch = data.getBooleanExtra("branch", true);
+	// mFileName = data.getStringExtra("filename");
+	// firstTime = false;
+	// /*
+	// int number_of_branches = data.getIntExtra("branchNumber", 0);
+	// if (isBranch == true) {
+	// mBranchNumber = number_of_branches + 1;
+	// mFileName = "branch" + mBranchNumber + ".xml";
+	// } else {
+	// mFileName = "main.xml";
+	//
+	// }
+	// */
+	//
+	// }
+	// }
 
 	/* toast */
 	private void showToast(String msg) {
-		Toast error = Toast.makeText(this, msg, Toast.LENGTH_SHORT);
+		Toast error = Toast.makeText(this, msg, Toast.LENGTH_LONG);
 		error.show();
 	}
-
 
 }

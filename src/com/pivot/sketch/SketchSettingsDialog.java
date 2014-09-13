@@ -18,6 +18,7 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import com.pivot.merge.R;
 
 public class SketchSettingsDialog extends Dialog {
 

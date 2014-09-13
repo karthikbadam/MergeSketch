@@ -9,9 +9,11 @@ import com.google.common.collect.Lists;
 
 public class Layer implements Parcelable {
 	private List<Stroke> strokes;
+	private List<TouchPoint> points; 
 	
 	public Layer() {
 		strokes = Lists.newArrayList();
+		points = Lists.newArrayList();
 	}
 	
 	public void addStroke(Stroke stroke) {
@@ -32,6 +34,16 @@ public class Layer implements Parcelable {
 	
 	public List<Stroke> getStrokes() {
 		return strokes;
+	}
+	
+	public void computePoints() {
+		for (Stroke tempStroke: strokes) {
+			points.addAll(tempStroke.points);
+		}
+	}
+	
+	public List<TouchPoint> getPoints() {
+		return points;
 	}
 
 	@Override

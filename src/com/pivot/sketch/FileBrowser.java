@@ -3,7 +3,6 @@ package com.pivot.sketch;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.DropboxAPI.Entry;
 import com.dropbox.client2.android.AndroidAuthSession;
@@ -13,11 +12,11 @@ import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.client2.session.AppKeyPair;
 import com.dropbox.client2.session.TokenPair;
 import com.dropbox.client2.session.Session.AccessType;
+import com.pivot.merge.R;
 import com.pivot.storage.ReadFromDropbox;
 import com.pivot.storage.ReadFromDropbox.FileDownloadListener;
 import com.pivot.storage.ReadMetaData;
 import com.pivot.storage.ReadMetaData.DataDownloadListener;
-
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.Context;

@@ -54,7 +54,7 @@ public class Stroke implements Parcelable{
 
 	public void setStrokeType(Style strokeType) {
 		this.strokeType = strokeType;
-		System.out.println("Setting Stroke type "+strokeType);
+		//System.out.println("Setting Stroke type "+strokeType);
 		mPaint.setStyle(strokeType);
 	}
 

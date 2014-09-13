@@ -3,7 +3,7 @@ package edu.pivot.history;
 import java.util.ArrayList;
 
 import com.pivot.sketch.Layer;
-import com.pivot.sketch.R;
+import com.pivot.merge.R;
 import com.pivot.sketch.Stroke;
 
 import edu.pivot.cluster.Aggregator;

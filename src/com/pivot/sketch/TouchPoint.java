@@ -1,15 +1,18 @@
 package com.pivot.sketch;
 
+import java.util.ArrayList;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 
 public class TouchPoint implements Parcelable {
 	float INFINITY = 1000000;
-	float x, y;
+	public float x, y;
 	public float leftDistance = INFINITY;
-	boolean is_start = false;
-	boolean is_end = false;
-
+	public boolean is_start = false;
+	public boolean is_end = false;
+	int index = 0; 
+	
 	public TouchPoint(float x, float y, boolean is_start, boolean is_end) {
 		this.x = x;
 		this.y = y;
@@ -87,5 +90,22 @@ public class TouchPoint implements Parcelable {
 			return new TouchPoint[size];
 		}
 	};
+
+	public void setIndex(int count) {
+		this.index = count;
+	}
+	
+	
+	//TODO check point-in-polygon!
+	public Boolean checkPIP(ArrayList<TouchPoint> points) {
+		  boolean result = false;
+	      for (int i = 0, j = points.size() - 1; i < points.size(); j = i++) {
+	        if ((points.get(i).y > this.y) != (points.get(j).y > this.y) &&
+	            (this.x < (points.get(j).x - points.get(i).x) * (this.y - points.get(i).y) / (points.get(j).y-points.get(i).y) + points.get(i).x)) {
+	          result = !result;
+	         }
+	      }
+	      return result;
+	}
 
 }

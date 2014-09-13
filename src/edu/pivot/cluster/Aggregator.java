@@ -3,6 +3,9 @@ package edu.pivot.cluster;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.app.ProgressDialog;
+import android.os.Handler;
+
 import com.google.common.collect.Lists;
 import com.pivot.sketch.Layer;
 import com.pivot.sketch.Stroke;
@@ -10,39 +13,119 @@ import com.pivot.sketch.TouchPoint;
 
 public class Aggregator {
 	Layer layer;
+
 	int totalHistorySize = 0;
 
+	Cluster rootCluster = new Cluster(0); 
+	
 	public ArrayList<Cluster> clusters;
+	public ArrayList<Cluster> backupClusters;
+	
 	public ArrayList<BoundingBox> boxes;
 
+	//ProgressDialog dialog; 
+	
 	public Aggregator(Layer layer) {
 		this.layer = layer;
 
 		clusters = Lists.newArrayList();
 		boxes = Lists.newArrayList();
 
+		backupClusters = Lists.newArrayList();
+		
+		//this.dialog = dialog; 
+		
 	}
 
+	Cluster newCluster;
 	
 	public ArrayList<Cluster> aggregate(int clusterNumber) {
 		initLeafCluster();
+		
+		layer.computePoints();
+		
+		final int historySize = layer.getPoints().size(); 
 
-		for (Cluster tempCluster : clusters) {
-			System.out.println(tempCluster.leftDistance);
-
-		}
-
-		for (int i = 0; i < totalHistorySize - clusterNumber; i++) {
-			// *******find out the min distance and index for the right node
+		for (int i = 0; i < historySize - clusterNumber; i++) {
+			
 			int minIndex = getMinDistanceIndex();
-
-			Cluster newCluster = new Cluster(
+			
+			newCluster = new Cluster(
 					clusters.get(minIndex - 1).leftDistance);
+			
 			newCluster.leftChild = clusters.get(minIndex - 1);
 			newCluster.rightChild = clusters.get(minIndex);
-
+			
+			newCluster.leftChild.parent = newCluster; 
+			newCluster.rightChild.parent = newCluster; 
+			
 			newCluster.startIndex = newCluster.leftChild.startIndex;
 			newCluster.endIndex = newCluster.rightChild.endIndex;
+			
+			//get the points in the new cluster
+			newCluster.setOriginalLayer(layer);
+
+			/* bounding box */
+			newCluster.boundingbox.leftBoundary = newCluster.leftChild.boundingbox.leftBoundary;
+			newCluster.boundingbox.rightBoundary = newCluster.leftChild.boundingbox.rightBoundary;
+			newCluster.boundingbox.upperBoundary = newCluster.leftChild.boundingbox.upperBoundary;
+			newCluster.boundingbox.bottomBoundary = newCluster.leftChild.boundingbox.bottomBoundary;
+
+			if (newCluster.leftChild.boundingbox.leftBoundary > newCluster.rightChild.boundingbox.leftBoundary)
+				newCluster.boundingbox.leftBoundary = newCluster.rightChild.boundingbox.leftBoundary;
+			if (newCluster.leftChild.boundingbox.rightBoundary < newCluster.rightChild.boundingbox.rightBoundary)
+				newCluster.boundingbox.rightBoundary = newCluster.rightChild.boundingbox.rightBoundary;
+			if (newCluster.leftChild.boundingbox.upperBoundary > newCluster.rightChild.boundingbox.upperBoundary)
+				newCluster.boundingbox.upperBoundary = newCluster.rightChild.boundingbox.upperBoundary;
+			if (newCluster.leftChild.boundingbox.bottomBoundary < newCluster.rightChild.boundingbox.bottomBoundary)
+				newCluster.boundingbox.bottomBoundary = newCluster.rightChild.boundingbox.bottomBoundary;
+
+			clusters.set(minIndex - 1, newCluster);
+			clusters.remove(minIndex);
+			
+//			if ( i < totalHistorySize - clusterNumber) {
+//			
+//				clusters.set(minIndex - 1, newCluster);
+//				clusters.remove(minIndex);
+//			
+//			} else if ( i == totalHistorySize - 2) {
+//				
+//				rootCluster = newCluster; 
+//			}
+			
+//			updateBarHandler.post(new Runnable() {
+//
+//                public void run() {
+//
+//                	dialog.incrementProgressBy(100/historySize);
+//
+//                  }
+//
+//              });
+			
+
+		}
+		
+		backupClusters.addAll(clusters);
+		
+		for (int i = historySize - clusterNumber; i < historySize - 1; i++) {
+			int minIndex = getMinDistanceIndex();
+
+			
+			newCluster = new Cluster(
+					clusters.get(minIndex - 1).leftDistance);
+			
+			newCluster.leftChild = clusters.get(minIndex - 1);
+			newCluster.rightChild = clusters.get(minIndex);
+			
+			newCluster.leftChild.parent = newCluster; 
+			newCluster.rightChild.parent = newCluster; 
+			
+			newCluster.startIndex = newCluster.leftChild.startIndex;
+			newCluster.endIndex = newCluster.rightChild.endIndex;
+			
+			//get the points in the new cluster
+			newCluster.setOriginalLayer(layer);
 
 			/* bounding box */
 			newCluster.boundingbox.leftBoundary = newCluster.leftChild.boundingbox.leftBoundary;
@@ -63,19 +146,9 @@ public class Aggregator {
 			clusters.remove(minIndex);
 			
 		}
-
-		System.out.println("CLuster size " + clusters.size());
-
-		int i = 0;
-		for (Cluster tempCluster : clusters) {
-			System.out.println(" cluster: " + i);
-			System.out.println(tempCluster.startIndex + " "
-					+ tempCluster.endIndex);
-			// tempCluster.printString();
-			i++;
-		}
 		
-		return clusters;
+		
+		return backupClusters;
 	}
 
 	public void initLeafCluster() {
@@ -94,12 +167,17 @@ public class Aggregator {
 
 			Cluster newCluster = new Cluster(point.leftDistance, count);
 			newCluster.setStartEnd(count);
+			point.setIndex(count);
 			newCluster.boundingbox.leftBoundary = point.getX();
 			newCluster.boundingbox.rightBoundary = point.getX();
 			newCluster.boundingbox.upperBoundary = point.getY();
 			newCluster.boundingbox.bottomBoundary = point.getY();
+			
+			//get the points in the new cluster
+			newCluster.setOriginalLayer(layer);
 
 			clusters.add(newCluster);
+			
 			count++;
 
 			for (int j = 1; j < points.size() - 1; j++) {
@@ -107,6 +185,8 @@ public class Aggregator {
 				point.setLeftDistance(point.distance(points.get(j-1)));
 				newCluster = new Cluster(point.leftDistance, count);
 				newCluster.setStartEnd(count);
+				point.setIndex(count);
+				
 				newCluster.boundingbox.leftBoundary = point.getX();
 				newCluster.boundingbox.rightBoundary = point.getX();
 				newCluster.boundingbox.upperBoundary = point.getY();
@@ -114,12 +194,15 @@ public class Aggregator {
 				clusters.add(newCluster);
 				count++;
 			}
+			
 			last_point = points.get(points.size() - 1);
 			if (points.size() > 1)
 				last_point.setLeftDistance(last_point.distance(points.get(points
 					.size() - 2)));
 			newCluster = new Cluster(last_point.leftDistance, count);
 			newCluster.setStartEnd(count);
+			last_point.setIndex(count);
+			
 			newCluster.boundingbox.leftBoundary = point.getX();
 			newCluster.boundingbox.rightBoundary = point.getX();
 			newCluster.boundingbox.upperBoundary = point.getY();
